@@ -48,7 +48,13 @@ export const registerUserWithEmailPassword = async({ email, password, displayNam
 
     } catch (error) {
         console.log(error);
-        return { ok: false, errorMessage: error.message }
+        let errorMessage = error.message;
+        
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'Este correo electrónico ya está registrado. Por favor, utiliza otro correo o inicia sesión.';
+        }
+        
+        return { ok: false, errorMessage }
     }
 
 }

@@ -1,54 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore/lite';
+import { FirebaseDB } from '../../firebase/config';
 import { useDispatch, useSelector } from 'react-redux';
 import { Alert, Button, FormControl, Grid, InputLabel, Link, MenuItem, Select, TextField, Typography } from '@mui/material';
 import { AuthLayout } from '../layout/AuthLayout';
 import { useForm } from '../../hooks';
 import { createRegistrationRequest } from '../../helpers/checkUserRegistration';
 import { updateRegistrationStatus } from '../../store/auth';
-import { PendingApprovalPage } from './PendingApprovalPage';
+import { useNavigate } from 'react-router-dom';
 
 const formData = {
     empresa: '',
     area: ''
 };
 
-const empresas = [
-    'Empresa A',
-    'Empresa B', 
-    'Empresa C',
-    'Corporativo'
-];
-
-const areas = [
-    'Recursos Humanos',
-    'Tecnología',
-    'Ventas',
-    'Marketing',
-    'Operaciones',
-    'Finanzas',
-    'Administración'
-];
-
 export const RegistrationRequestPage = () => {
-
-    const { status, uid, email, displayName, isRegistered, isActive } = useSelector( state => state.auth );
+    const { status, uid, email, displayName } = useSelector(state => state.auth);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     
-    // Debug: mostrar el estado actual
-    console.log('RegistrationRequestPage - Estado actual:', { status, uid, email, displayName, isRegistered, isActive });
-    
-    const { empresa, area, onInputChange } = useForm( formData );
+    const { empresa, area, onInputChange } = useForm(formData);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitMessage, setSubmitMessage] = useState('');
     const [submitError, setSubmitError] = useState('');
+    const [companies, setCompanies] = useState([]);
+    const [availableAreas, setAvailableAreas] = useState([]);
 
-    // Si el usuario ya está registrado pero no activo, mostrar página de espera
-    // Solo después de enviar la solicitud exitosamente
-    if (isRegistered && !isActive && submitMessage) {
-        return <PendingApprovalPage />;
-    }
+    useEffect(() => {
+        loadCompanies();
+    }, []);
 
-    const onSubmit = async( event ) => {
+    useEffect(() => {
+        if (empresa) {
+            loadAreasForCompany(empresa);
+        } else {
+            setAvailableAreas([]);
+        }
+    }, [empresa]);
+
+    const loadCompanies = async () => {
+        try {
+            const companiesRef = collection(FirebaseDB, 'empresas');
+            const companiesSnap = await getDocs(companiesRef);
+            const companiesData = companiesSnap.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setCompanies(companiesData);
+        } catch (error) {
+            console.error('Error al cargar empresas:', error);
+            setSubmitError('Error al cargar las empresas. Por favor, recarga la página.');
+        }
+    };
+
+    const loadAreasForCompany = async (companyId) => {
+        try {
+            const selectedCompany = companies.find(c => c.id === companyId);
+            if (selectedCompany && selectedCompany.areas) {
+                const areasRef = collection(FirebaseDB, 'areas');
+                const areasSnap = await getDocs(areasRef);
+                const areasData = areasSnap.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }))
+                    .filter(area => selectedCompany.areas.includes(area.id));
+                setAvailableAreas(areasData);
+            }
+        } catch (error) {
+            console.error('Error al cargar áreas:', error);
+            setSubmitError('Error al cargar las áreas. Por favor, intenta nuevamente.');
+        }
+    };
+
+    const onSubmit = async(event) => {
         event.preventDefault();
         
         if (!empresa || !area) {
@@ -61,14 +86,36 @@ export const RegistrationRequestPage = () => {
         setSubmitMessage('');
         
         try {
-            const success = await createRegistrationRequest(uid, email, displayName, empresa, area);
+            const selectedCompany = companies.find(c => c.id === empresa);
+            const selectedArea = availableAreas.find(a => a.id === area);
+
+            const result = await createRegistrationRequest(uid, {
+                email,
+                displayName,
+                empresa: {
+                    id: empresa,
+                    nombre: selectedCompany?.nombre || ''
+                },
+                area: {
+                    id: area,
+                    nombre: selectedArea?.nombre || ''
+                }
+            });
             
-            if (success) {
+            if (result.ok) {
                 setSubmitMessage('Solicitud enviada exitosamente. Espera la aprobación del administrador.');
                 // Actualizar el estado para indicar que ya se envió la solicitud
-                dispatch(updateRegistrationStatus({ isRegistered: true, isActive: false }));
+                dispatch(updateRegistrationStatus({ 
+                    isRegistered: true, 
+                    isActive: false,
+                    pendingRegistration: false
+                }));
+                // Redirigir a la página de espera después de un breve momento
+                setTimeout(() => {
+                    navigate('/auth/pending-approval');
+                }, 2000);
             } else {
-                setSubmitError('Error al enviar la solicitud. Intenta nuevamente.');
+                setSubmitError(result.errorMessage || 'Error al enviar la solicitud. Intenta nuevamente.');
             }
         } catch (error) {
             console.error('Error en onSubmit:', error);
@@ -80,9 +127,9 @@ export const RegistrationRequestPage = () => {
 
     return (
         <AuthLayout title="Solicitud de Acceso">
-            <form onSubmit={ onSubmit } className="animate__animated animate__fadeIn animate__faster">
+            <form onSubmit={onSubmit} className="animate__animated animate__fadeIn animate__faster">
                 <Grid container>
-                    <Grid item xs={ 12 } sx={{ mt: 2 }}>
+                    <Grid item xs={12} sx={{ mt: 2 }}>
                         <Typography variant="h6" component="h2" gutterBottom>
                             Bienvenido {displayName}
                         </Typography>
@@ -91,56 +138,56 @@ export const RegistrationRequestPage = () => {
                         </Typography>
                     </Grid>
 
-                    <Grid item xs={ 12 } sx={{ mt: 2 }}>
+                    <Grid item xs={12} sx={{ mt: 2 }}>
                         <FormControl fullWidth>
                             <InputLabel>Empresa</InputLabel>
                             <Select
-                                value={ empresa }
+                                value={empresa}
                                 label="Empresa"
                                 name="empresa"
-                                onChange={ onInputChange }
-                                disabled={ isSubmitting }
+                                onChange={onInputChange}
+                                disabled={isSubmitting}
                             >
-                                {empresas.map((emp) => (
-                                    <MenuItem key={emp} value={emp}>{emp}</MenuItem>
+                                {companies.map((company) => (
+                                    <MenuItem key={company.id} value={company.id}>{company.nombre}</MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
                     </Grid>
 
-                    <Grid item xs={ 12 } sx={{ mt: 2 }}>
+                    <Grid item xs={12} sx={{ mt: 2 }}>
                         <FormControl fullWidth>
                             <InputLabel>Área</InputLabel>
                             <Select
-                                value={ area }
+                                value={area}
                                 label="Área"
                                 name="area"
-                                onChange={ onInputChange }
-                                disabled={ isSubmitting }
+                                onChange={onInputChange}
+                                disabled={isSubmitting}
                             >
-                                {areas.map((ar) => (
-                                    <MenuItem key={ar} value={ar}>{ar}</MenuItem>
+                                {availableAreas.map((area) => (
+                                    <MenuItem key={area.id} value={area.id}>{area.nombre}</MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
                     </Grid>
 
-                    <Grid container spacing={ 2 } sx={{ mb: 2, mt: 1 }}>
+                    <Grid container spacing={2} sx={{ mb: 2, mt: 1 }}>
                         {submitError && (
-                            <Grid item xs={ 12 }>
+                            <Grid item xs={12}>
                                 <Alert severity="error">{submitError}</Alert>
                             </Grid>
                         )}
                         
                         {submitMessage && (
-                            <Grid item xs={ 12 }>
+                            <Grid item xs={12}>
                                 <Alert severity="success">{submitMessage}</Alert>
                             </Grid>
                         )}
                         
-                        <Grid item xs={ 12 }>
+                        <Grid item xs={12}>
                             <Button 
-                                disabled={ isSubmitting || !!submitMessage }
+                                disabled={isSubmitting}
                                 type="submit" 
                                 variant="contained" 
                                 fullWidth
@@ -149,7 +196,6 @@ export const RegistrationRequestPage = () => {
                             </Button>
                         </Grid>
                     </Grid>
-
                 </Grid>
             </form>
         </AuthLayout>

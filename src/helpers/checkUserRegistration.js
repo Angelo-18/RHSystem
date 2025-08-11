@@ -1,25 +1,20 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore/lite';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore/lite';
 import { FirebaseDB } from '../firebase/config';
 
-/**
- * Verifica si un usuario está registrado y activo en el sistema de RH
- * @param {string} uid - ID del usuario
- * @returns {Promise<{isRegistered: boolean, isActive: boolean, userData?: object}>}
- */
 export const checkUserRegistration = async (uid) => {
     try {
-        const userDocRef = doc(FirebaseDB, 'personal_registrado', uid);
-        const userDoc = await getDoc(userDocRef);
-        
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
+        const docRef = doc(FirebaseDB, 'personal_registrado', uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
             return {
                 isRegistered: true,
-                isActive: userData.activo || false,
-                userData
+                isActive: data.activo || false,
+                ...data
             };
         }
-        
+
         return {
             isRegistered: false,
             isActive: false
@@ -28,39 +23,31 @@ export const checkUserRegistration = async (uid) => {
         console.error('Error checking user registration:', error);
         return {
             isRegistered: false,
-            isActive: false
+            isActive: false,
+            error: error.message
         };
     }
 };
 
-/**
- * Crea una solicitud de registro para un nuevo usuario
- * @param {string} uid - ID del usuario
- * @param {string} email - Email del usuario
- * @param {string} displayName - Nombre del usuario
- * @param {string} empresa - Empresa seleccionada
- * @param {string} area - Área seleccionada
- * @returns {Promise<boolean>} - true si se creó exitosamente
- */
-export const createRegistrationRequest = async (uid, email, displayName, empresa, area) => {
+export const createRegistrationRequest = async (uid, userData) => {
     try {
-        const userDocRef = doc(FirebaseDB, 'personal_registrado', uid);
-        
-        const userData = {
-            uid,
-            email,
-            displayName,
-            empresa,
-            area,
+        const docRef = doc(FirebaseDB, 'personal_registrado', uid);
+        await setDoc(docRef, {
+            ...userData,
+            estado: 'pendiente',
             activo: false,
-            fechaSolicitud: new Date(),
-            estado: 'pendiente' // pendiente, aprobado, rechazado
+            perfil: 'colaborador',
+            fechaSolicitud: new Date().toISOString()
+        });
+
+        return {
+            ok: true
         };
-        
-        await setDoc(userDocRef, userData);
-        return true;
     } catch (error) {
         console.error('Error creating registration request:', error);
-        return false;
+        return {
+            ok: false,
+            errorMessage: error.message
+        };
     }
 };
