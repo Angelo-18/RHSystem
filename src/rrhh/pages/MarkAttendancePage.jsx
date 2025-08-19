@@ -50,9 +50,13 @@ export const MarkAttendancePage = () => {
             start: now.toISOString(),
             end: now.toISOString(),
             title: `Marcación: ${formValues.type}`,
+            startBreak: formValues.type === 'break_inicio' ? now.toISOString() : null,
+            endBreak: formValues.type === 'break_fin' ? now.toISOString() : null
         };
 
-        const { ok } = await dispatch(startAddingAttendanceRecord(recordData));
+        const response = await dispatch(startAddingAttendanceRecord(recordData));
+        const { ok } = response || { ok: false };
+        console.log(ok);
 
         if (ok) {
             setSuccess(true);

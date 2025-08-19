@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse } from '@mui/material';
-import { AssignmentInd, Assessment, Description, AdminPanelSettings, ExpandLess, ExpandMore, Timer, NoteAdd } from '@mui/icons-material';
+import { AssignmentInd, Assessment, Description, AdminPanelSettings, ExpandLess, ExpandMore, Timer, NoteAdd, Schedule } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -17,7 +17,6 @@ const getMenuConfig = (openSection) => ({
             { title: 'Justificaciones', icon: NoteAdd, path: '/justificaciones', description: 'Gestionar justificaciones' }
         ]
     },
-
         { title: 'Evaluaciones', icon: Assessment, path: '/evaluaciones', description: 'Ver y realizar evaluaciones programadas' },
         { title: 'Documentación', icon: Description, path: '/documentacion', description: 'Ver boletas, legajos y contratos' }
     ],
@@ -32,7 +31,6 @@ const getMenuConfig = (openSection) => ({
             { title: 'Justificaciones', icon: NoteAdd, path: '/justificaciones', description: 'Gestionar justificaciones' }
         ]
     },
-
         { title: 'Evaluaciones', icon: Assessment, path: '/evaluaciones', description: 'Gestionar y programar evaluaciones' },
         { title: 'Documentación', icon: Description, path: '/documentacion', description: 'Gestionar documentación del personal' }
     ],
@@ -47,7 +45,6 @@ const getMenuConfig = (openSection) => ({
             { title: 'Justificaciones', icon: NoteAdd, path: '/justificaciones', description: 'Gestionar justificaciones del equipo' }
         ]
     },
-
         { title: 'Evaluaciones', icon: Assessment, path: '/evaluaciones', description: 'Ver evaluaciones del personal a cargo' },
         { title: 'Documentación', icon: Description, path: '/documentacion', description: 'Ver documentación propia' }
     ],
@@ -62,7 +59,6 @@ const getMenuConfig = (openSection) => ({
             { title: 'Justificaciones', icon: NoteAdd, path: '/justificaciones', description: 'Gestionar todas las justificaciones' }
         ]
     },
-
         { title: 'Evaluaciones', icon: Assessment, path: '/evaluaciones', description: 'Gestionar todas las evaluaciones' },
         { title: 'Documentación', icon: Description, path: '/documentacion', description: 'Gestionar toda la documentación' },
         { title: 'Administración', icon: AdminPanelSettings, path: '/admin', description: 'Gestionar usuarios y permisos' }

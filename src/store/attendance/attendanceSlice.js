@@ -6,7 +6,8 @@ export const attendanceSlice = createSlice({
         isLoading: false,
         attendanceRecords: [],
         activeRecord: null,
-        errorMessage: null
+        errorMessage: null,
+        currentDayRecords: []
     },
     reducers: {
         startLoadingAttendance: (state) => {
@@ -19,11 +20,25 @@ export const attendanceSlice = createSlice({
         },
         addAttendanceRecord: (state, { payload }) => {
             state.attendanceRecords.push(payload);
+            // Actualizar registros del día actual
+            const today = new Date().toISOString().split('T')[0];
+            const recordDate = new Date(payload.start).toISOString().split('T')[0];
+            if (today === recordDate) {
+                state.currentDayRecords.push(payload);
+            }
         },
         updateAttendanceRecord: (state, { payload }) => {
             state.attendanceRecords = state.attendanceRecords.map(record =>
                 record.id === payload.id ? payload : record
             );
+            // Actualizar en currentDayRecords si corresponde
+            const today = new Date().toISOString().split('T')[0];
+            const recordDate = new Date(payload.start).toISOString().split('T')[0];
+            if (today === recordDate) {
+                state.currentDayRecords = state.currentDayRecords.map(record =>
+                    record.id === payload.id ? payload : record
+                );
+            }
         },
         setActiveRecord: (state, { payload }) => {
             state.activeRecord = payload;
@@ -37,6 +52,12 @@ export const attendanceSlice = createSlice({
         },
         clearError: (state) => {
             state.errorMessage = null;
+        },
+        setCurrentDayRecords: (state, { payload }) => {
+            state.currentDayRecords = payload;
+        },
+        clearCurrentDayRecords: (state) => {
+            state.currentDayRecords = [];
         }
     }
 });
@@ -49,5 +70,7 @@ export const {
     setActiveRecord,
     clearActiveRecord,
     setError,
-    clearError
+    clearError,
+    setCurrentDayRecords,
+    clearCurrentDayRecords
 } = attendanceSlice.actions;

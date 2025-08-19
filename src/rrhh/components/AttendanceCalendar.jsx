@@ -18,24 +18,7 @@ export const AttendanceCalendar = () => {
         loadAttendanceRecords();
     }, []);
 
-    const handleSelectSlot = async ({ start }) => {
-        if (userProfile === 'colaborador') {
-            const timestamp = new Date(start);
-            const newRecord = {
-                title: 'Marcación: entrada',
-                start: timestamp.toISOString(),
-                end: timestamp.toISOString(),
-                type: 'entrada',
-                status: 'registered',
-                createdAt: new Date().toISOString()
-            };
-
-            const result = await startAddingAttendance(newRecord);
-            if (result.success) {
-                await loadAttendanceRecords();
-            }
-        }
-    };
+    // Removed handleSelectSlot as we don't want to create new events
 
     const handleSelectEvent = (event) => {
         setActiveEvent(event);
@@ -49,46 +32,49 @@ export const AttendanceCalendar = () => {
 
     const eventStyleGetter = (event) => {
         let backgroundColor = '#757575';
-
-        // switch (event.status) {
-        //     case 'pending':
-        //         backgroundColor = '#ffd700';
-        //         break;
-        //     case 'approved':
-        //         backgroundColor = '#4caf50';
-        //         break;
-        //     case 'rejected':
-        //         backgroundColor = '#f44336';
-        //         break;
-        //     case 'registered':
-        //         backgroundColor = '#2196f3';
-        //         break;
-        //     default:
-        //         if (event.title.includes('después de break')) {
-        //             backgroundColor = '#9c27b0';
-        //         }
-        // }
+        let borderColor = 'transparent';
+        
+        if (event.isWithinSchedule) {
+            backgroundColor = '#2196f3'; // Azul para marcaciones dentro del horario
+        } else if (event.isLate) {
+            backgroundColor = '#ff9800'; // Naranja para tardanzas
+        } else {
+            backgroundColor = '#f44336'; // Rojo para marcaciones fuera de horario
+        }
 
         return {
             style: {
                 backgroundColor,
+                borderColor,
                 opacity: 0.8,
-                color: 'white',
-                border: 'none'
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '2px 5px',
+                fontWeight: 500
             }
         };
     };
+
+    // Convertir fechas ISO a objetos Date para el calendario
+    const eventsWithDates = events.map(event => ({
+        ...event,
+        start: new Date(event.start),
+        end: new Date(event.end),
+        startBreak: event.startBreak ? new Date(event.startBreak) : null,
+        endBreak: event.endBreak ? new Date(event.endBreak) : null
+    }));
 
     return (
         <Box sx={{ height: 'calc(100vh - 200px)' }}>
             <Calendar
                 localizer={localizer}
-                events={events}
+                events={eventsWithDates}
                 startAccessor="start"
                 endAccessor="end"
                 style={{ height: '100%' }}
-                selectable={userProfile === 'colaborador'}
-                onSelectSlot={handleSelectSlot}
+                selectable={false}
+
                 onSelectEvent={handleSelectEvent}
                 eventPropGetter={eventStyleGetter}
                 components={{

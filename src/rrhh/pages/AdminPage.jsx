@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { UserManagement } from '../components/UserManagement';
 import { CompanyManagement } from '../components/CompanyManagement';
 import { AreaManagement } from '../components/AreaManagement';
+import { ScheduleManagement } from '../components/ScheduleManagement';
 import { RRHHLayout } from '../layout/RRHHLayout';
 import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
@@ -42,6 +43,7 @@ export const AdminPage = () => {
                                 <Tab label="Gestión de Usuarios" />
                                 <Tab label="Gestión de Empresas" />
                                 <Tab label="Gestión de Áreas" />
+                                <Tab label="Gestión de Horarios" />
                             </Tabs>
                         </Box>
                         
@@ -56,6 +58,10 @@ export const AdminPage = () => {
                             
                             {tabValue === 2 && (
                                 <AreaManagement />
+                            )}
+
+                            {tabValue === 3 && (
+                                <ScheduleManagement />
                             )}
                         </Box>
                     </CardContent>

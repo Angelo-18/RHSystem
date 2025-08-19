@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { CloudUpload } from '@mui/icons-material';
 import {
@@ -14,24 +14,37 @@ import {
     MenuItem,
     Box,
     Typography,
-    CircularProgress
+    CircularProgress,
+    Divider
 } from '@mui/material';
-import { useAttendanceStore } from '../../hooks/useAttendanceStore';
+import { useJustificationsStore } from '../../hooks/useJustificationsStore';
 
 export const AttendanceModal = ({ open, onClose, selectedEvent }) => {
     const { userProfile } = useSelector(state => state.auth);
-    const { startSavingJustification, isLoading, error: storeError } = useAttendanceStore();
+    const { startSavingJustification, isLoading, errorMessage } = useJustificationsStore();
 
-    const [justification, setJustification] = useState(selectedEvent?.justification || '');
+    const [justification, setJustification] = useState(selectedEvent?.reason || '');
     const [status, setStatus] = useState(selectedEvent?.status || 'pending');
     const [file, setFile] = useState(null);
     const [error, setError] = useState(null);
 
+    useEffect(() => {
+        if (selectedEvent) {
+            setJustification(selectedEvent.reason || '');
+            setStatus(selectedEvent.status || 'pending');
+        }
+    }, [selectedEvent]);
+
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
         if (selectedFile) {
-            if (selectedFile.size > 5 * 1024 * 1024) {
-                setError('El archivo no debe superar los 5MB');
+            if (selectedFile.size > 5 * 1024 * 1024) { // 5MB
+                setError('El archivo es demasiado grande. El tamaño máximo es 5MB.');
+                return;
+            }
+            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+            if (!allowedTypes.includes(selectedFile.type)) {
+                setError('Formato de archivo no válido. Por favor, seleccione un archivo PDF, DOC, DOCX, JPG o PNG.');
                 return;
             }
             setFile(selectedFile);
@@ -40,25 +53,20 @@ export const AttendanceModal = ({ open, onClose, selectedEvent }) => {
     };
 
     const handleSave = async () => {
-        if (!selectedEvent) return;
         if (!justification.trim()) {
-            setError('Por favor, ingrese un motivo para la justificación');
+            setError('Por favor, ingrese una justificación');
             return;
         }
 
         const justificationData = {
-            justification: justification.trim(),
-            status: userProfile === 'colaborador' ? 'pending' : status,
-            updatedAt: new Date().toISOString(),
+            id: selectedEvent.id,
+            reason: justification.trim(),
+            status: status,
+            date: selectedEvent.start
         };
 
-        const result = await startSavingJustification(
-            selectedEvent.id,
-            justificationData,
-            file
-        );
-
-        if (result.success) {
+        const result = await startSavingJustification(justificationData, file);
+        if (result.ok) {
             handleClose();
         }
     };
@@ -71,16 +79,40 @@ export const AttendanceModal = ({ open, onClose, selectedEvent }) => {
         onClose();
     };
 
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'pending':
+                return 'Pendiente de revisión';
+            case 'approved':
+                return 'Aprobado';
+            case 'rejected':
+                return 'Rechazado';
+            case 'registered':
+                return 'Registrado';
+            default:
+                return 'Estado desconocido';
+        }
+    };
+
     return (
         <Dialog open={open} onClose={handleClose}>
             <DialogTitle>
                 {userProfile === 'colaborador' ? 'Justificar Asistencia' : 'Gestionar Asistencia'}
             </DialogTitle>
             <DialogContent>
-                <Box sx={{ mt: 4 }}>
+                <Box sx={{ mt: 2 }}>
                     <Typography variant="body2" gutterBottom>
-                        Fecha: {selectedEvent?.start?.toLocaleDateString()}
+                        <strong>Fecha:</strong> {selectedEvent?.start ? new Date(selectedEvent.start).toLocaleDateString() : ''}
                     </Typography>
+                    <Typography variant="body2" gutterBottom>
+                        <strong>Estado:</strong> {getStatusText(selectedEvent?.status)}
+                    </Typography>
+                    {selectedEvent?.notes && (
+                        <Typography variant="body2" color="error" gutterBottom>
+                            <strong>Notas del sistema:</strong> {selectedEvent.notes}
+                        </Typography>
+                    )}
+                    <Divider sx={{ my: 2 }} />
                     <TextField
                         autoFocus
                         margin="dense"
@@ -123,9 +155,9 @@ export const AttendanceModal = ({ open, onClose, selectedEvent }) => {
                             </Typography>
                         </Box>
                     )}
-                    {(error || storeError) && (
+                    {(error || errorMessage) && (
                         <Typography color="error" variant="body2" sx={{ mt: 2 }}>
-                            {error || storeError}
+                            {error || errorMessage}
                         </Typography>
                     )}
                     {(userProfile === 'rrhh' || userProfile === 'admin' || userProfile === 'jefe') && (

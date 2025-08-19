@@ -22,6 +22,7 @@ import {
     TextField
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { useScheduleStore } from '../../hooks/useScheduleStore';
 
 export const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -34,16 +35,22 @@ export const UserManagement = () => {
         activo: false,
         empresa: '',
         area: '',
-        puesto: ''
+        puesto: '',
+        horario: ''
     });
     const [companies, setCompanies] = useState([]);
     const [areas, setAreas] = useState([]);
     const [availableAreas, setAvailableAreas] = useState([]);
+    const { schedules, loadSchedules } = useScheduleStore();
 
     useEffect(() => {
-        loadUsers();
-        loadCompanies();
-        loadAreas();
+        const loadInitialData = async () => {
+            await loadSchedules();
+            await loadUsers();
+            await loadCompanies();
+            await loadAreas();
+        };
+        loadInitialData();
     }, []);
 
     const loadCompanies = async () => {
@@ -107,7 +114,8 @@ export const UserManagement = () => {
             activo: user.activo || false,
             empresa: user.empresa || '',
             area: user.area || '',
-            puesto: user.puesto || ''
+            puesto: user.puesto || '',
+            horario: user.horario || ''
         });
         setOpenDialog(true);
     };
@@ -121,7 +129,8 @@ export const UserManagement = () => {
             activo: false,
             empresa: '',
             area: '',
-            puesto: ''
+            puesto: '',
+            horario: ''
         });
     };
 
@@ -136,10 +145,11 @@ export const UserManagement = () => {
                 activo: editForm.activo,
                 empresa: editForm.empresa,
                 area: editForm.area,
-                puesto: editForm.puesto
+                puesto: editForm.puesto,
+                horario: editForm.horario
             });
 
-            await loadUsers(); // Recargar la lista de usuarios
+            await loadUsers();
             handleCloseDialog();
         } catch (error) {
             console.error('Error al actualizar usuario:', error);
@@ -185,6 +195,7 @@ export const UserManagement = () => {
                             <TableCell>Empresa</TableCell>
                             <TableCell>Área</TableCell>
                             <TableCell>Puesto</TableCell>
+                            <TableCell>Horario</TableCell>
                             <TableCell>Acciones</TableCell>
                         </TableRow>
                     </TableHead>
@@ -202,6 +213,9 @@ export const UserManagement = () => {
                                     {availableAreas.find(a => a.id === user.area)?.nombre || '-'}
                                 </TableCell>
                                 <TableCell>{user.puesto || '-'}</TableCell>
+                                <TableCell>
+                                    {schedules.find(s => s.id === user.horario)?.nombre || '-'}
+                                </TableCell>
                                 <TableCell>
                                     <IconButton onClick={() => handleEditClick(user)}>
                                         <EditIcon />
@@ -283,6 +297,20 @@ export const UserManagement = () => {
                         value={editForm.puesto}
                         onChange={(e) => setEditForm({ ...editForm, puesto: e.target.value })}
                     />
+                    <FormControl fullWidth margin="dense">
+                        <Select
+                            value={editForm.horario}
+                            onChange={(e) => setEditForm({ ...editForm, horario: e.target.value })}
+                            displayEmpty
+                        >
+                            <MenuItem value="">Seleccione un horario</MenuItem>
+                            {schedules.map((schedule) => (
+                                <MenuItem key={schedule.id} value={schedule.id}>
+                                    {schedule.nombre}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseDialog}>Cancelar</Button>
