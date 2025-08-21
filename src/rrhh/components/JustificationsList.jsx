@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import {
     Table,
     TableBody,
@@ -20,6 +21,8 @@ import { useJustificationsStore } from '../../hooks/useJustificationsStore';
 import { AttendanceModal } from './AttendanceModal';
 
 export const JustificationsList = () => {
+    const { userProfile, uid } = useSelector(state => state.auth);
+    console.log(userProfile);
     const { 
         justifications, 
         isLoading, 
@@ -29,6 +32,11 @@ export const JustificationsList = () => {
         activeJustification,
         clearActiveJustificationEvent
     } = useJustificationsStore();
+
+  const canApproveJustifications = ['supervisor', 'recursos_humanos', 'admin'].includes(userProfile);
+    const canEditDeleteJustification = (justification) => {
+        return userProfile === 'colaborador' && justification.userId === uid;
+    };
 
     const [openModal, setOpenModal] = useState(false);
 
@@ -113,41 +121,44 @@ export const JustificationsList = () => {
                                     )}
                                 </TableCell>
                                 <TableCell>
-                                    {justification.status === 'pending' ? (
-                                        <Box>
-                                            <Button
-                                                size="small"
-                                                color="success"
-                                                onClick={() => handleStatusChange(justification.id, 'approved')}
-                                            >
-                                                Aprobar
-                                            </Button>
-                                            <Button
-                                                size="small"
-                                                color="error"
-                                                onClick={() => handleStatusChange(justification.id, 'rejected')}
-                                            >
-                                                Rechazar
-                                            </Button>
-                                        </Box>
-                                    ) : (
-                                        <Box>
-                                            <IconButton
-                                                size="small"
-                                                color="primary"
-                                                onClick={() => handleEdit(justification)}
-                                            >
-                                                <Edit />
-                                            </IconButton>
-                                            <IconButton
-                                                size="small"
-                                                color="error"
-                                                onClick={() => handleDelete(justification.id)}
-                                            >
-                                                <Delete />
-                                            </IconButton>
-                                        </Box>
-                                    )}
+                                    <Box>
+                                        {justification.status === 'pending' && canApproveJustifications && (
+                                            <>
+                                                <Button
+                                                    size="small"
+                                                    color="success"
+                                                    onClick={() => handleStatusChange(justification.id, 'approved')}
+                                                >
+                                                    Aprobar
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={() => handleStatusChange(justification.id, 'rejected')}
+                                                >
+                                                    Rechazar
+                                                </Button>
+                                            </>
+                                        )}
+                                        {canEditDeleteJustification(justification) && (
+                                            <>
+                                                <IconButton
+                                                    size="small"
+                                                    color="primary"
+                                                    onClick={() => handleEdit(justification)}
+                                                >
+                                                    <Edit />
+                                                </IconButton>
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={() => handleDelete(justification.id)}
+                                                >
+                                                    <Delete />
+                                                </IconButton>
+                                            </>
+                                        )}
+                                    </Box>
                                 </TableCell>
                             </TableRow>
                         ))}

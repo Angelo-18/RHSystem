@@ -7,7 +7,7 @@ export const EvaluacionesPage = () => {
 
     const getProfileSpecificContent = () => {
         switch(userProfile) {
-            case 'personal':
+            case 'colaborador':
                 return {
                     title: 'Mis Evaluaciones',
                     description: 'Ver evaluaciones realizadas y programadas'

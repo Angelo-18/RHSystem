@@ -17,12 +17,13 @@ export const startLoadingJustificationsRecords = (userId = null, userProfile = n
             const justificationsRef = collection(FirebaseDB, 'justifications');
             let justificationsQuery;
 
-            if (userProfile === 'personal') {
+            if (userProfile === 'colaborador') {
+                // Colaborador solo ve sus propias justificaciones
                 justificationsQuery = query(justificationsRef, where('userId', '==', userId));
-            } else if (userProfile === 'jefe') {
-                // Obtener los IDs de los miembros del equipo
+            } else if (userProfile === 'supervisor') {
+                // Supervisor ve las justificaciones de su equipo y las suyas
                 const teamQuery = query(
-                    collection(FirebaseDB, 'users'),
+                    collection(FirebaseDB, 'personal_registrado'),
                     where('supervisorId', '==', userId)
                 );
                 const teamSnap = await getDocs(teamQuery);
@@ -30,10 +31,14 @@ export const startLoadingJustificationsRecords = (userId = null, userProfile = n
                 
                 justificationsQuery = query(
                     justificationsRef,
-                    where('userId', 'in', [...teamUserIds, userId])
+                    where('userId', 'in', [userId, ...teamUserIds])
                 );
-            } else {
+            } else if (userProfile === 'recursos_humanos' || userProfile === 'admin') {
+                // RRHH y Admin ven todas las justificaciones
                 justificationsQuery = justificationsRef;
+            } else {
+                // Por defecto, solo ver las propias justificaciones
+                justificationsQuery = query(justificationsRef, where('userId', '==', userId));
             }
 
             const justificationsSnap = await getDocs(justificationsQuery);
@@ -65,8 +70,8 @@ export const startAddingJustification = (justificationData, file = null) => {
                 ...justificationData,
                 documentUrl,
                 createdAt: new Date().toISOString(),
-                date: justificationData.date.toISOString(),
-                status: 'pendiente'
+                date: justificationData.date,
+                status: 'pending'
             };
 
             const docRef = await addDoc(collection(FirebaseDB, 'justifications'), newJustification);
