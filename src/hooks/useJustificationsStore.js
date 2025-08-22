@@ -29,15 +29,31 @@ export const useJustificationsStore = () => {
 
     const startSavingJustification = async (justificationData, file = null) => {
         try {
-            if (justificationData.id) {
-                // Actualizar justificación existente
-                return await dispatch(startUpdatingJustification(justificationData.id, justificationData));
-            } else {
-                // Crear nueva justificación
-                return await dispatch(startAddingJustification({
+            // Si estamos editando una justificación existente (desde la lista de justificaciones)
+            if (activeJustification?.id) {
+                return await dispatch(startUpdatingJustification(activeJustification.id, {
                     ...justificationData,
-                    userId: uid
+                    id: activeJustification.id
                 }, file));
+            } else {
+                // Verificar si ya existe una justificación para esta asistencia
+                const existingJustification = justifications.find(
+                    justification => justification.attendanceId === justificationData.attendanceId
+                );
+
+                if (existingJustification) {
+                    // Si existe, actualizar la justificación existente
+                    return await dispatch(startUpdatingJustification(existingJustification.id, {
+                        ...justificationData,
+                        id: existingJustification.id
+                    }));
+                } else {
+                    // Si no existe, crear una nueva justificación
+                    return await dispatch(startAddingJustification({
+                        ...justificationData,
+                        userId: uid
+                    }, file));
+                }
             }
         } catch (error) {
             console.error('Error al guardar la justificación:', error);

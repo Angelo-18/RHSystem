@@ -24,16 +24,8 @@ export const AttendanceModal = ({ open, onClose, selectedEvent }) => {
     const { startSavingJustification, isLoading, errorMessage } = useJustificationsStore();
 
     const [justification, setJustification] = useState(selectedEvent?.reason || '');
-    const [status, setStatus] = useState(selectedEvent?.status || 'pending');
     const [file, setFile] = useState(null);
     const [error, setError] = useState(null);
-
-    useEffect(() => {
-        if (selectedEvent) {
-            setJustification(selectedEvent.reason || '');
-            setStatus(selectedEvent.status || 'pending');
-        }
-    }, [selectedEvent]);
 
     const handleFileChange = (event) => {
         const selectedFile = event.target.files[0];
@@ -57,11 +49,11 @@ export const AttendanceModal = ({ open, onClose, selectedEvent }) => {
             setError('Por favor, ingrese una justificación');
             return;
         }
-
+        
         const justificationData = {
-            id: selectedEvent.id,
+            attendanceId: selectedEvent.id,
             reason: justification.trim(),
-            status: status,
+            status: 'pending',
             date: selectedEvent.start
         };
 
@@ -73,7 +65,6 @@ export const AttendanceModal = ({ open, onClose, selectedEvent }) => {
 
     const handleClose = () => {
         setJustification('');
-        setStatus('pending');
         setFile(null);
         setError(null);
         onClose();
@@ -160,20 +151,7 @@ export const AttendanceModal = ({ open, onClose, selectedEvent }) => {
                             {error || errorMessage}
                         </Typography>
                     )}
-                    {(userProfile === 'rrhh' || userProfile === 'admin' || userProfile === 'jefe') && (
-                        <FormControl fullWidth sx={{ mt: 2 }}>
-                            <InputLabel>Estado</InputLabel>
-                            <Select
-                                value={status}
-                                label="Estado"
-                                onChange={(e) => setStatus(e.target.value)}
-                            >
-                                <MenuItem value="pending">Pendiente</MenuItem>
-                                <MenuItem value="approved">Aprobado</MenuItem>
-                                <MenuItem value="rejected">Rechazado</MenuItem>
-                            </Select>
-                        </FormControl>
-                    )}
+
                 </Box>
             </DialogContent>
             <DialogActions>

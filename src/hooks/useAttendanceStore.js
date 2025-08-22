@@ -87,7 +87,6 @@ export const useAttendanceStore = () => {
         
         attendanceSnap.forEach(doc => {
             const record = doc.data();
-            console.log(record);
             const recordDate = new Date(record.start);
             if (isNaN(recordDate.getTime())) return;
             

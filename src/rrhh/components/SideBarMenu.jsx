@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse } from '@mui/material';
-import { AssignmentInd, Assessment, Description, AdminPanelSettings, ExpandLess, ExpandMore, Timer, NoteAdd, Schedule } from '@mui/icons-material';
+import { AssignmentInd, Assessment, Description, AdminPanelSettings, ExpandLess, ExpandMore, Timer, NoteAdd, Schedule, Article, FileCopy, Settings } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -17,9 +17,27 @@ const getMenuConfig = (openSection) => ({
             { title: 'Justificaciones', icon: NoteAdd, path: '/justificaciones', description: 'Gestionar justificaciones' }
         ]
     },
-        { title: 'Evaluaciones', icon: Assessment, path: '/evaluaciones', description: 'Ver y realizar evaluaciones programadas' },
-        { title: 'Documentación', icon: Description, path: '/documentacion', description: 'Ver boletas, legajos y contratos' }
-    ],
+    {
+        title: 'Evaluaciones',
+        icon: Assessment,
+        description: 'Gestión de evaluaciones',
+        isSection: true,
+        isOpen: openSection === 'evaluaciones',
+        subItems: [
+            { title: 'Evaluaciones Pendientes', icon: Assessment, path: '/evaluaciones/pendientes', description: 'Realizar evaluaciones asignadas' },
+            { title: 'Mis Resultados', icon: Assessment, path: '/evaluaciones/resultados', description: 'Ver resultados de evaluaciones' }
+        ]
+    },
+    {
+        title: 'Documentación',
+        icon: Description,
+        description: 'Gestión de documentos',
+        isSection: true,
+        isOpen: openSection === 'documentacion',
+        subItems: [
+            { title: 'Mis Documentos', icon: Article, path: '/documentacion/personal', description: 'Ver y firmar documentos personales' }
+        ]
+    }],
     recursos_humanos: [{
         title: 'Asistencias',
         icon: AssignmentInd,
@@ -31,9 +49,30 @@ const getMenuConfig = (openSection) => ({
             { title: 'Justificaciones', icon: NoteAdd, path: '/justificaciones', description: 'Gestionar justificaciones' }
         ]
     },
-        { title: 'Evaluaciones', icon: Assessment, path: '/evaluaciones', description: 'Gestionar y programar evaluaciones' },
-        { title: 'Documentación', icon: Description, path: '/documentacion', description: 'Gestionar documentación del personal' }
-    ],
+    {
+        title: 'Evaluaciones',
+        icon: Assessment,
+        description: 'Gestión de evaluaciones',
+        isSection: true,
+        isOpen: openSection === 'evaluaciones',
+        subItems: [
+            { title: 'Asignar Evaluaciones', icon: Assessment, path: '/evaluaciones/asignar', description: 'Asignar evaluaciones al personal' },
+            { title: 'Evaluaciones Pendientes', icon: Assessment, path: '/evaluaciones/pendientes', description: 'Realizar evaluaciones asignadas' },
+            { title: 'Gestión de Resultados', icon: Assessment, path: '/evaluaciones/resultados', description: 'Ver y gestionar resultados' }
+        ]
+    },
+    {
+        title: 'Documentación',
+        icon: Description,
+        description: 'Gestión de documentos',
+        isSection: true,
+        isOpen: openSection === 'documentacion',
+        subItems: [
+            { title: 'Mis Documentos', icon: Article, path: '/documentacion/personal', description: 'Ver y firmar documentos personales' },
+            { title: 'Generar Documentos', icon: FileCopy, path: '/documentacion/generar', description: 'Crear contratos y boletas' },
+            { title: 'Gestión Documental', icon: Settings, path: '/documentacion/gestion', description: 'Administrar documentación' }
+        ]
+    }],
     supervisor: [{
         title: 'Asistencias',
         icon: AssignmentInd,
@@ -45,9 +84,27 @@ const getMenuConfig = (openSection) => ({
             { title: 'Justificaciones', icon: NoteAdd, path: '/justificaciones', description: 'Gestionar justificaciones del equipo' }
         ]
     },
-        { title: 'Evaluaciones', icon: Assessment, path: '/evaluaciones', description: 'Ver evaluaciones del personal a cargo' },
-        { title: 'Documentación', icon: Description, path: '/documentacion', description: 'Ver documentación propia' }
-    ],
+    {
+        title: 'Evaluaciones',
+        icon: Assessment,
+        description: 'Gestión de evaluaciones',
+        isSection: true,
+        isOpen: openSection === 'evaluaciones',
+        subItems: [
+            { title: 'Evaluaciones Pendientes', icon: Assessment, path: '/evaluaciones/pendientes', description: 'Evaluar al personal asignado' },
+            { title: 'Resultados del Equipo', icon: Assessment, path: '/evaluaciones/resultados', description: 'Ver resultados del equipo' }
+        ]
+    },
+    {
+        title: 'Documentación',
+        icon: Description,
+        description: 'Gestión de documentos',
+        isSection: true,
+        isOpen: openSection === 'documentacion',
+        subItems: [
+            { title: 'Mis Documentos', icon: Article, path: '/documentacion/personal', description: 'Ver y firmar documentos personales' }
+        ]
+    }],
     admin: [{
         title: 'Asistencias',
         icon: AssignmentInd,
@@ -59,14 +116,37 @@ const getMenuConfig = (openSection) => ({
             { title: 'Justificaciones', icon: NoteAdd, path: '/justificaciones', description: 'Gestionar todas las justificaciones' }
         ]
     },
-        { title: 'Evaluaciones', icon: Assessment, path: '/evaluaciones', description: 'Gestionar todas las evaluaciones' },
-        { title: 'Documentación', icon: Description, path: '/documentacion', description: 'Gestionar toda la documentación' },
-        { title: 'Administración', icon: AdminPanelSettings, path: '/admin', description: 'Gestionar usuarios y permisos' }
-    ]
+    {
+        title: 'Evaluaciones',
+        icon: Assessment,
+        description: 'Gestión de evaluaciones',
+        isSection: true,
+        isOpen: openSection === 'evaluaciones',
+        subItems: [
+            { title: 'Asignar Evaluaciones', icon: Assessment, path: '/evaluaciones/asignar', description: 'Asignar evaluaciones al personal' },
+            { title: 'Evaluaciones Pendientes', icon: Assessment, path: '/evaluaciones/pendientes', description: 'Realizar evaluaciones asignadas' },
+            { title: 'Gestión de Resultados', icon: Assessment, path: '/evaluaciones/resultados', description: 'Ver todos los resultados' },
+            { title: 'Configuración', icon: AdminPanelSettings, path: '/evaluaciones/config', description: 'Configurar tipos de evaluación' }
+        ]
+    },
+    {
+        title: 'Documentación',
+        icon: Description,
+        description: 'Gestión de documentos',
+        isSection: true,
+        isOpen: openSection === 'documentacion',
+        subItems: [
+            { title: 'Mis Documentos', icon: Article, path: '/documentacion/personal', description: 'Ver y firmar documentos personales' },
+            { title: 'Generar Documentos', icon: FileCopy, path: '/documentacion/generar', description: 'Crear contratos y boletas' },
+            { title: 'Gestión Documental', icon: Settings, path: '/documentacion/gestion', description: 'Administrar documentación' },
+            { title: 'Configuración', icon: AdminPanelSettings, path: '/documentacion/admin', description: 'Configuración avanzada' }
+        ]
+    },
+    { title: 'Administración', icon: AdminPanelSettings, path: '/admin', description: 'Gestionar usuarios y permisos' }]
 });
 
 export const SideBarMenu = () => {
-    const { userProfile } = useSelector(state => state.auth);
+    const { profile } = useSelector(state => state.auth);
     const navigate = useNavigate();
     const [openSection, setOpenSection] = useState('');
 
@@ -78,7 +158,7 @@ export const SideBarMenu = () => {
         navigate(path, { replace: true });
     };
 
-    const menuItems = getMenuConfig(openSection)[userProfile] || getMenuConfig(openSection).colaborador;
+    const menuItems = getMenuConfig(openSection)[profile] || getMenuConfig(openSection).colaborador;
 
     return (
         <List>
@@ -86,7 +166,7 @@ export const SideBarMenu = () => {
                 <div key={item.title}>
                     <ListItem disablePadding>
                         <ListItemButton 
-                            onClick={() => item.isSection ? handleSectionClick('asistencias') : handleSubItemClick(item.path)}
+                            onClick={() => item.isSection ? handleSectionClick(item.title.toLowerCase()) : handleSubItemClick(item.path)}
                         >
                             <ListItemIcon>
                                 <item.icon />
